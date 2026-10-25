@@ -12,6 +12,7 @@ namespace RMSThemeStudio
         private Image _wallpaper = null;
         private Color _senderColor = Color.FromArgb(2, 132, 199);
         private Color _receiverColor = Color.FromArgb(30, 41, 59);
+        private Color _fontColor = Color.White;
         private string _quickEmoji = "✨";
         private string _setIconGroup = "✨,⭐,🌟,💫,🔥";
         private string _animationStyle = "ParticleSnow";
@@ -69,6 +70,7 @@ namespace RMSThemeStudio
 
             try { _senderColor = ColorTranslator.FromHtml(model.SenderBubble); } catch { _senderColor = Color.FromArgb(2, 132, 199); }
             try { _receiverColor = ColorTranslator.FromHtml(model.ReceiverBubble); } catch { _receiverColor = Color.FromArgb(30, 41, 59); }
+            try { _fontColor = ColorTranslator.FromHtml(model.TextFontColor); } catch { _fontColor = Color.White; }
 
             _quickEmoji = string.IsNullOrWhiteSpace(model.DefaultIcon) ? "✨" : model.DefaultIcon.Trim();
             _setIconGroup = string.IsNullOrWhiteSpace(model.SetIconGroup) ? _quickEmoji : model.SetIconGroup.Trim();
@@ -292,7 +294,7 @@ namespace RMSThemeStudio
                     Rectangle recvBox = new Rectangle(scr.Left + 16, scr.Top + 110, (int)(scr.Width * 0.65f), 52);
                     using (var bRecv = new SolidBrush(Color.FromArgb(alpha, _receiverColor)))
                     using (var pRecv = GetRoundedRectPath(recvBox, 14))
-                    using (var bText = new SolidBrush(Color.FromArgb(alpha, Color.White)))
+                    using (var bText = new SolidBrush(Color.FromArgb(alpha, _fontColor)))
                     using (var bMeta = new SolidBrush(Color.FromArgb(alpha, Color.LightGray)))
                     {
                         g.FillPath(bRecv, pRecv);

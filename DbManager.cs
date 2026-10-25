@@ -38,7 +38,7 @@ namespace RMSThemeStudio
             {
                 using var conn = new SqlConnection(_settings.GetConnectionString());
                 await conn.OpenAsync();
-                string sql = $"SELECT ThemeID, themeName, themebackgroundPath, ReceiverBubble, SenderBubble, DefaultIcon, SetIconGroup, callbackgroudPath, Status, CreatedAt, UpdatedAt FROM {_settings.TableName} ORDER BY ThemeID ASC";
+                string sql = $"SELECT ThemeID, themeName, themebackgroundPath, ReceiverBubble, SenderBubble, DefaultIcon, SetIconGroup, callbackgroudPath, Status, CreatedAt, UpdatedAt, ISNULL(textFontColor, '#FFFFFF') FROM {_settings.TableName} ORDER BY ThemeID ASC";
                 using var cmd = new SqlCommand(sql, conn);
                 using var reader = await cmd.ExecuteReaderAsync();
 
@@ -56,7 +56,8 @@ namespace RMSThemeStudio
                         CallBackgroundPath = reader.IsDBNull(7) ? "" : reader.GetString(7),
                         Status = reader.IsDBNull(8) ? "Public" : reader.GetString(8),
                         CreatedAt = reader.IsDBNull(9) ? (DateTime?)null : reader.GetDateTime(9),
-                        UpdatedAt = reader.IsDBNull(10) ? (DateTime?)null : reader.GetDateTime(10)
+                        UpdatedAt = reader.IsDBNull(10) ? (DateTime?)null : reader.GetDateTime(10),
+                        TextFontColor = reader.IsDBNull(11) ? "#FFFFFF" : reader.GetString(11)
                     };
                     list.Add(m);
                 }
@@ -87,6 +88,7 @@ namespace RMSThemeStudio
                             themebackgroundPath = @Bg,
                             ReceiverBubble = @Recv,
                             SenderBubble = @Send,
+                            textFontColor = @TextFontColor,
                             DefaultIcon = @Icon,
                             SetIconGroup = @IconGroup,
                             callbackgroudPath = @CallBg,
@@ -100,6 +102,7 @@ namespace RMSThemeStudio
                     updateCmd.Parameters.AddWithValue("@Bg", theme.ThemeBackgroundPath);
                     updateCmd.Parameters.AddWithValue("@Recv", theme.ReceiverBubble);
                     updateCmd.Parameters.AddWithValue("@Send", theme.SenderBubble);
+                    updateCmd.Parameters.AddWithValue("@TextFontColor", string.IsNullOrWhiteSpace(theme.TextFontColor) ? "#FFFFFF" : theme.TextFontColor);
                     updateCmd.Parameters.AddWithValue("@Icon", theme.DefaultIcon);
                     updateCmd.Parameters.AddWithValue("@IconGroup", theme.SetIconGroup);
                     updateCmd.Parameters.AddWithValue("@CallBg", theme.CallBackgroundPath);
@@ -111,8 +114,8 @@ namespace RMSThemeStudio
                 else
                 {
                     string insertSql = $@"INSERT INTO {_settings.TableName} 
-                        (themeName, themebackgroundPath, ReceiverBubble, SenderBubble, DefaultIcon, SetIconGroup, callbackgroudPath, Status, CreatedAt, UpdatedAt)
-                        VALUES (@Name, @Bg, @Recv, @Send, @Icon, @IconGroup, @CallBg, @Status, GETDATE(), GETDATE());
+                        (themeName, themebackgroundPath, ReceiverBubble, SenderBubble, textFontColor, DefaultIcon, SetIconGroup, callbackgroudPath, Status, CreatedAt, UpdatedAt)
+                        VALUES (@Name, @Bg, @Recv, @Send, @TextFontColor, @Icon, @IconGroup, @CallBg, @Status, GETDATE(), GETDATE());
                         SELECT SCOPE_IDENTITY();";
 
                     using var insertCmd = new SqlCommand(insertSql, conn);
@@ -120,6 +123,7 @@ namespace RMSThemeStudio
                     insertCmd.Parameters.AddWithValue("@Bg", theme.ThemeBackgroundPath);
                     insertCmd.Parameters.AddWithValue("@Recv", theme.ReceiverBubble);
                     insertCmd.Parameters.AddWithValue("@Send", theme.SenderBubble);
+                    insertCmd.Parameters.AddWithValue("@TextFontColor", string.IsNullOrWhiteSpace(theme.TextFontColor) ? "#FFFFFF" : theme.TextFontColor);
                     insertCmd.Parameters.AddWithValue("@Icon", theme.DefaultIcon);
                     insertCmd.Parameters.AddWithValue("@IconGroup", theme.SetIconGroup);
                     insertCmd.Parameters.AddWithValue("@CallBg", theme.CallBackgroundPath);

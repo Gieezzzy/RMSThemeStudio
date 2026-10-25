@@ -35,6 +35,9 @@ namespace RMSThemeStudio
         private TextBox txtReceiverBubble;
         private Button btnPickReceiverColor;
         private Panel pnlReceiverPreview;
+        private TextBox txtTextFontColor;
+        private Button btnPickFontColor;
+        private Panel pnlFontPreview;
         private ComboBox cmbNotificationSound;
         private Button btnPlaySound;
         private ComboBox cmbSynthStyle;
@@ -204,10 +207,20 @@ namespace RMSThemeStudio
             pnlReceiverPreview = new Panel { Location = new Point(170, y), Size = new Size(24, 24), BackColor = ColorTranslator.FromHtml("#1E293B"), BorderStyle = BorderStyle.FixedSingle };
             btnPickReceiverColor = new Button { Location = new Point(205, y - 2), Width = 90, Height = 28, Text = "Pick Color" };
             btnPickReceiverColor.Click += (s, e) => PickColor(txtReceiverBubble, pnlReceiverPreview);
-            y += 40;
+            y += 35;
             pnlLeft.Controls.Add(txtReceiverBubble);
             pnlLeft.Controls.Add(pnlReceiverPreview);
             pnlLeft.Controls.Add(btnPickReceiverColor);
+
+            pnlLeft.Controls.Add(CreateLabel("Text Font Color Hex:", ref y));
+            txtTextFontColor = new TextBox { Width = 140, Location = new Point(20, y), Text = "#FFFFFF" };
+            pnlFontPreview = new Panel { Location = new Point(170, y), Size = new Size(24, 24), BackColor = ColorTranslator.FromHtml("#FFFFFF"), BorderStyle = BorderStyle.FixedSingle };
+            btnPickFontColor = new Button { Location = new Point(205, y - 2), Width = 90, Height = 28, Text = "Pick Color" };
+            btnPickFontColor.Click += (s, e) => PickColor(txtTextFontColor, pnlFontPreview);
+            y += 40;
+            pnlLeft.Controls.Add(txtTextFontColor);
+            pnlLeft.Controls.Add(pnlFontPreview);
+            pnlLeft.Controls.Add(btnPickFontColor);
 
             pnlLeft.Controls.Add(CreateHeaderLabel("3. Custom Notification Audio", ref y));
             pnlLeft.Controls.Add(CreateLabel("Audio File (.wav):", ref y));
@@ -338,14 +351,22 @@ namespace RMSThemeStudio
 
             pnlPlayLeft.Controls.Add(CreateLabel("Cinematic Animation Easter Egg Style:", ref y));
             cmbAnimStyle = new ComboBox { Width = 340, Location = new Point(20, y), DropDownStyle = ComboBoxStyle.DropDownList };
-            cmbAnimStyle.Items.AddRange(new object[] {
-                "Sadako / Horror Crawl (Well + Scream + Shake)",
-                "Santa Flyby (Snow + Sleigh + Ho Ho Ho!)",
-                "Valentine Hearts (3D Hearts + Romantic Harp)",
-                "Easter Egg Hunt (Bunny + Golden Egg Hatch)",
-                "Anime Action (Speedlines + Energy Blast)",
-                "Cartoon Comic (POW! BOOM! + Whistle Boing)",
-                "Cosmic Supernova (Custom Emoji Particle Storm)"
+            cmbAnimStyle.Items.AddRange(new object[] {
+
+                "Sadako / Horror Crawl (Well + Scream + Shake)",
+
+                "Santa Flyby (Snow + Sleigh + Ho Ho Ho!)",
+
+                "Valentine Hearts (3D Hearts + Romantic Harp)",
+
+                "Easter Egg Hunt (Bunny + Golden Egg Hatch)",
+
+                "Anime Action (Speedlines + Energy Blast)",
+
+                "Cartoon Comic (POW! BOOM! + Whistle Boing)",
+
+                "Cosmic Supernova (Custom Emoji Particle Storm)"
+
             });
             cmbAnimStyle.SelectedIndex = 0;
             y += 35;
@@ -668,6 +689,7 @@ namespace RMSThemeStudio
                 ThemeName = txtThemeName.Text,
                 SenderBubble = txtSenderBubble.Text,
                 ReceiverBubble = txtReceiverBubble.Text,
+                TextFontColor = txtTextFontColor.Text,
                 DefaultIcon = txtDefaultIcon.Text,
                 SetIconGroup = txtSetIconGroup.Text,
                 AnimationStyle = cmbAnimStyle.Text
@@ -721,6 +743,7 @@ namespace RMSThemeStudio
                     CallBackgroundPath = $"{_settings.BaseWebUrl}MessageTheme/{themeName}/CallBackground.png",
                     SenderBubble = txtSenderBubble.Text.Trim(),
                     ReceiverBubble = txtReceiverBubble.Text.Trim(),
+                    TextFontColor = txtTextFontColor.Text.Trim(),
                     DefaultIcon = txtDefaultIcon.Text.Trim(),
                     SetIconGroup = txtSetIconGroup.Text.Trim(),
                     Status = cmbStatus.Text
@@ -771,8 +794,10 @@ namespace RMSThemeStudio
                 txtSetIconGroup.Text = m.SetIconGroup;
                 txtSenderBubble.Text = m.SenderBubble;
                 txtReceiverBubble.Text = m.ReceiverBubble;
+                txtTextFontColor.Text = string.IsNullOrWhiteSpace(m.TextFontColor) ? "#FFFFFF" : m.TextFontColor;
                 try { pnlSenderPreview.BackColor = ColorTranslator.FromHtml(m.SenderBubble); } catch { }
                 try { pnlReceiverPreview.BackColor = ColorTranslator.FromHtml(m.ReceiverBubble); } catch { }
+                try { pnlFontPreview.BackColor = ColorTranslator.FromHtml(txtTextFontColor.Text); } catch { }
 
                 string serverThemeDir = Path.Combine(_settings.ThemeBaseDirectory, m.ThemeName);
                 string localChatBg = Path.Combine(serverThemeDir, "Background.png");
