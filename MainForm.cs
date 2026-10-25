@@ -609,10 +609,13 @@ namespace RMSThemeStudio
             lblDesignerStatus.Text = "Generating HD 1080x1920 Wallpaper with AI... Please wait...";
             btnGenerateAi.Enabled = false;
 
+            ReleaseThumbnailPreviews();
+
             string outDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "temp_bg");
             Directory.CreateDirectory(outDir);
-            _tempChatBgPath = Path.Combine(outDir, "Background.png");
-            _tempCallBgPath = Path.Combine(outDir, "CallBackground.png");
+            string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmssfff");
+            _tempChatBgPath = Path.Combine(outDir, $"Background_{stamp}.png");
+            _tempCallBgPath = Path.Combine(outDir, $"CallBackground_{stamp}.png");
 
             var result = await ImageGenerator.GenerateWithAiAsync(prompt, _tempChatBgPath);
             btnGenerateAi.Enabled = true;
@@ -634,10 +637,13 @@ namespace RMSThemeStudio
 
         private void GenerateProceduralWallpaper()
         {
+            ReleaseThumbnailPreviews();
+
             string outDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "temp_bg");
             Directory.CreateDirectory(outDir);
-            _tempChatBgPath = Path.Combine(outDir, "Background.png");
-            _tempCallBgPath = Path.Combine(outDir, "CallBackground.png");
+            string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmssfff");
+            _tempChatBgPath = Path.Combine(outDir, $"Background_{stamp}.png");
+            _tempCallBgPath = Path.Combine(outDir, $"CallBackground_{stamp}.png");
 
             Color dom = pnlSenderPreview.BackColor;
             Color sec = pnlReceiverPreview.BackColor;
@@ -655,10 +661,13 @@ namespace RMSThemeStudio
             using var ofd = new OpenFileDialog { Filter = "Image Files (*.png;*.jpg;*.svg)|*.png;*.jpg;*.svg" };
             if (ofd.ShowDialog() == DialogResult.OK)
             {
+                ReleaseThumbnailPreviews();
+
                 string outDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "temp_bg");
                 Directory.CreateDirectory(outDir);
-                _tempChatBgPath = Path.Combine(outDir, "Background.png");
-                _tempCallBgPath = Path.Combine(outDir, "CallBackground.png");
+                string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmssfff");
+                _tempChatBgPath = Path.Combine(outDir, $"Background_{stamp}.png");
+                _tempCallBgPath = Path.Combine(outDir, $"CallBackground_{stamp}.png");
 
                 File.Copy(ofd.FileName, _tempChatBgPath, true);
                 ImageGenerator.GenerateCallBackground(_tempChatBgPath, _tempCallBgPath);
@@ -669,15 +678,33 @@ namespace RMSThemeStudio
             }
         }
 
+        private void ReleaseThumbnailPreviews()
+        {
+            try
+            {
+                if (picChatBgThumb.Image != null)
+                {
+                    var img = picChatBgThumb.Image;
+                    picChatBgThumb.Image = null;
+                    img.Dispose();
+                }
+                if (picCallBgThumb.Image != null)
+                {
+                    var img = picCallBgThumb.Image;
+                    picCallBgThumb.Image = null;
+                    img.Dispose();
+                }
+            }
+            catch { }
+        }
+
         private void LoadThumbnailPreviews()
         {
             try
             {
-                picChatBgThumb.Image?.Dispose();
-                picCallBgThumb.Image?.Dispose();
-
-                if (File.Exists(_tempChatBgPath)) picChatBgThumb.Image = Image.FromFile(_tempChatBgPath);
-                if (File.Exists(_tempCallBgPath)) picCallBgThumb.Image = Image.FromFile(_tempCallBgPath);
+                ReleaseThumbnailPreviews();
+                if (File.Exists(_tempChatBgPath)) picChatBgThumb.Image = ImageGenerator.LoadImageNoLock(_tempChatBgPath);
+                if (File.Exists(_tempCallBgPath)) picCallBgThumb.Image = ImageGenerator.LoadImageNoLock(_tempCallBgPath);
             }
             catch { }
         }

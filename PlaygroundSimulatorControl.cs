@@ -61,7 +61,7 @@ namespace RMSThemeStudio
             try
             {
                 _wallpaper?.Dispose();
-                _wallpaper = File.Exists(wallpaperPath) ? Image.FromFile(wallpaperPath) : null;
+                _wallpaper = ImageGenerator.LoadImageNoLock(wallpaperPath);
             }
             catch
             {

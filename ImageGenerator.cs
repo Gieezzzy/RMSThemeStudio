@@ -12,6 +12,23 @@ namespace RMSThemeStudio
     {
         private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
 
+        public static Image LoadImageNoLock(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return null;
+            try
+            {
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var ms = new MemoryStream();
+                fs.CopyTo(ms);
+                ms.Position = 0;
+                return Image.FromStream(ms);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         public static async Task<(bool Success, string Message)> GenerateWithAiAsync(string prompt, string outputFilePath)
         {
             try
@@ -26,7 +43,10 @@ namespace RMSThemeStudio
                 }
 
                 Directory.CreateDirectory(Path.GetDirectoryName(outputFilePath)!);
-                await File.WriteAllBytesAsync(outputFilePath, data);
+                using (var fs = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+                {
+                    await fs.WriteAsync(data, 0, data.Length);
+                }
                 return (true, "AI Wallpaper generated and saved successfully!");
             }
             catch (Exception ex)
@@ -87,7 +107,11 @@ namespace RMSThemeStudio
             }
 
             Directory.CreateDirectory(Path.GetDirectoryName(outputFilePath)!);
-            bmp.Save(outputFilePath, ImageFormat.Png);
+            using (var ms = new MemoryStream())
+            {
+                bmp.Save(ms, ImageFormat.Png);
+                File.WriteAllBytes(outputFilePath, ms.ToArray());
+            }
         }
 
         public static void GenerateCallBackground(string sourceChatBgPath, string outputCallBgPath)
@@ -100,8 +124,15 @@ namespace RMSThemeStudio
 
             if (File.Exists(sourceChatBgPath))
             {
-                using var src = Image.FromFile(sourceChatBgPath);
-                g.DrawImage(src, new Rectangle(0, 0, w, h));
+                using var src = LoadImageNoLock(sourceChatBgPath);
+                if (src != null)
+                {
+                    g.DrawImage(src, new Rectangle(0, 0, w, h));
+                }
+                else
+                {
+                    g.Clear(Color.FromArgb(10, 14, 26));
+                }
             }
             else
             {
@@ -123,7 +154,11 @@ namespace RMSThemeStudio
             }
 
             Directory.CreateDirectory(Path.GetDirectoryName(outputCallBgPath)!);
-            bmp.Save(outputCallBgPath, ImageFormat.Png);
+            using (var ms = new MemoryStream())
+            {
+                bmp.Save(ms, ImageFormat.Png);
+                File.WriteAllBytes(outputCallBgPath, ms.ToArray());
+            }
         }
     }
 }
