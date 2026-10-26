@@ -17,6 +17,7 @@ namespace RMSThemeStudio
         public string BaseWebUrl { get; set; } = "http://192.168.32.43/Android/RMS/";
 
         public string AiImageEndpoint { get; set; } = "https://image.pollinations.ai/prompt/{prompt}?width=1080&height=1920&model=flux&nologo=true";
+        public string CanvaAccountEmail { get; set; } = "";
 
         private static readonly string SettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "theme_studio_settings.json");
 
@@ -32,23 +33,24 @@ namespace RMSThemeStudio
                 if (File.Exists(SettingsPath))
                 {
                     string json = File.ReadAllText(SettingsPath);
-                    var settings = JsonSerializer.Deserialize<AppSettings>(json);
-                    if (settings != null) return settings;
+                    return JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error reading settings: " + ex.Message);
             }
-            return new AppSettings();
+            var s = new AppSettings();
+            s.Save();
+            return s;
         }
 
         public void Save()
         {
             try
             {
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                string json = JsonSerializer.Serialize(this, options);
+                var opt = new JsonSerializerOptions { WriteIndented = true };
+                string json = JsonSerializer.Serialize(this, opt);
                 File.WriteAllText(SettingsPath, json);
             }
             catch (Exception ex)

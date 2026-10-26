@@ -44,9 +44,12 @@ namespace RMSThemeStudio
         private Button btnSynthesize;
         private Button btnBrowseSound;
         private TextBox txtAiPrompt;
-        private Button btnGenerateAi;
+        private Button btnOpenCanva;
+        private Button btnImportCanva;
+        
         private Button btnGenerateProcedural;
         private Button btnBrowseBg;
+        private TextBox txtCanvaEmail;
         private PictureBox picChatBgThumb;
         private PictureBox picCallBgThumb;
         private Button btnPublishTheme;
@@ -260,16 +263,39 @@ namespace RMSThemeStudio
             yr += 35;
             pnlRight.Controls.Add(txtAiPrompt);
 
-            btnGenerateAi = new Button { Location = new Point(20, yr), Width = 190, Height = 32, Text = "🤖 Generate with AI (Flux)", BackColor = Color.FromArgb(37, 99, 235), ForeColor = Color.White };
-            btnGenerateAi.Click += async (s, e) => await GenerateAiWallpaperAsync();
+            btnOpenCanva = new Button
+            {
+                Location = new Point(20, yr),
+                Width = 270,
+                Height = 34,
+                Text = "🎨 Design in Canva (Google Login)",
+                BackColor = Color.FromArgb(124, 58, 237),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold)
+            };
+            btnOpenCanva.Click += (s, e) => OpenCanvaWithGoogleLogin();
 
-            btnGenerateProcedural = new Button { Location = new Point(220, yr), Width = 180, Height = 32, Text = "✨ Generate Atmospheric", BackColor = Color.FromArgb(71, 85, 105), ForeColor = Color.White };
+            btnImportCanva = new Button
+            {
+                Location = new Point(300, yr),
+                Width = 270,
+                Height = 34,
+                Text = "📥 Auto-Import from Canva Downloads",
+                BackColor = Color.FromArgb(16, 185, 129),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold)
+            };
+            btnImportCanva.Click += (s, e) => AutoImportFromCanvaDownloads();
+            yr += 40;
+            pnlRight.Controls.Add(btnOpenCanva);
+            pnlRight.Controls.Add(btnImportCanva);
+
+            btnGenerateProcedural = new Button { Location = new Point(20, yr), Width = 270, Height = 32, Text = "✨ Generate Atmospheric Gradient", BackColor = Color.FromArgb(71, 85, 105), ForeColor = Color.White };
             btnGenerateProcedural.Click += (s, e) => GenerateProceduralWallpaper();
 
-            btnBrowseBg = new Button { Location = new Point(410, yr), Width = 160, Height = 32, Text = "📁 Browse Canva/Image", BackColor = Color.FromArgb(71, 85, 105), ForeColor = Color.White };
+            btnBrowseBg = new Button { Location = new Point(300, yr), Width = 270, Height = 32, Text = "📁 Browse Local Image File", BackColor = Color.FromArgb(71, 85, 105), ForeColor = Color.White };
             btnBrowseBg.Click += (s, e) => BrowseBgFile();
             yr += 45;
-            pnlRight.Controls.Add(btnGenerateAi);
             pnlRight.Controls.Add(btnGenerateProcedural);
             pnlRight.Controls.Add(btnBrowseBg);
 
@@ -521,8 +547,14 @@ namespace RMSThemeStudio
 
             pnl.Controls.Add(CreateLabel("Base Web URL:", ref y));
             txtBaseWebUrl = new TextBox { Width = 500, Location = new Point(30, y), Text = _settings.BaseWebUrl };
-            y += 45;
+            y += 40;
             pnl.Controls.Add(txtBaseWebUrl);
+
+            pnl.Controls.Add(CreateHeaderLabel("Connected Canva Account (Google Login)", ref y));
+            pnl.Controls.Add(CreateLabel("Canva / Google Account Email:", ref y));
+            txtCanvaEmail = new TextBox { Width = 500, Location = new Point(30, y), Text = _settings.CanvaAccountEmail, PlaceholderText = "e.g. audit.staff@gmail.com" };
+            y += 45;
+            pnl.Controls.Add(txtCanvaEmail);
 
             btnSaveSettings = new Button { Location = new Point(30, y), Width = 220, Height = 40, Text = "💾 Save All Settings", BackColor = Color.FromArgb(16, 185, 129), ForeColor = Color.White, Font = new Font("Segoe UI", 10f, FontStyle.Bold) };
             btnSaveSettings.Click += (s, e) => SaveSettings();
@@ -541,13 +573,11 @@ namespace RMSThemeStudio
 
         private void PickColor(TextBox targetBox, Panel targetPreview)
         {
-            using var cd = new ColorDialog();
-            try { cd.Color = ColorTranslator.FromHtml(targetBox.Text); } catch { }
-            if (cd.ShowDialog() == DialogResult.OK)
+            using var cd = new ModernColorPickerDialog(targetBox.Text);
+            if (cd.ShowDialog(this) == DialogResult.OK)
             {
-                string hex = "#" + cd.Color.R.ToString("X2") + cd.Color.G.ToString("X2") + cd.Color.B.ToString("X2");
-                targetBox.Text = hex;
-                targetPreview.BackColor = cd.Color;
+                targetBox.Text = cd.SelectedHex;
+                targetPreview.BackColor = cd.SelectedColor;
                 SyncSimulatorFromDesigner();
             }
         }
@@ -597,43 +627,190 @@ namespace RMSThemeStudio
             }
         }
 
-        private async Task GenerateAiWallpaperAsync()
+        private void OpenCanvaWithGoogleLogin()
         {
-            string prompt = txtAiPrompt.Text.Trim();
-            if (string.IsNullOrWhiteSpace(prompt))
+            if (string.IsNullOrWhiteSpace(_settings.CanvaAccountEmail))
             {
-                MessageBox.Show("Please enter a prompt for the AI.", "Prompt Empty", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                using var inputForm = new Form
+                {
+                    Text = "Canva Account Login (Google)",
+                    Size = new Size(480, 240),
+                    StartPosition = FormStartPosition.CenterParent,
+                    FormBorderStyle = FormBorderStyle.FixedDialog,
+                    MaximizeBox = false,
+                    MinimizeBox = false,
+                    BackColor = Color.FromArgb(15, 23, 42),
+                    ForeColor = Color.White
+                };
+                var lblMsg = new Label
+                {
+                    Text = "Link your Canva / Google Account to RMS Theme Studio:\n(A browser tab will open for you to sign in with Google)",
+                    Location = new Point(20, 20),
+                    Size = new Size(420, 45),
+                    ForeColor = Color.FromArgb(226, 232, 240)
+                };
+                var txtEmail = new TextBox
+                {
+                    Location = new Point(20, 75),
+                    Width = 420,
+                    Font = new Font("Segoe UI", 10.5f),
+                    BackColor = Color.FromArgb(30, 41, 59),
+                    ForeColor = Color.White,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    PlaceholderText = "e.g. your.email@gmail.com"
+                };
+                var btnGo = new Button
+                {
+                    Text = "🚀 Open Canva & Sign in with Google",
+                    Location = new Point(20, 130),
+                    Width = 270,
+                    Height = 38,
+                    BackColor = Color.FromArgb(124, 58, 237),
+                    ForeColor = Color.White,
+                    Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                    FlatStyle = FlatStyle.Flat,
+                    DialogResult = DialogResult.OK
+                };
+                btnGo.FlatAppearance.BorderSize = 0;
+                var btnSkip = new Button
+                {
+                    Text = "Open Directly",
+                    Location = new Point(300, 130),
+                    Width = 140,
+                    Height = 38,
+                    BackColor = Color.FromArgb(51, 65, 85),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    DialogResult = DialogResult.OK
+                };
+                btnSkip.FlatAppearance.BorderSize = 0;
+
+                inputForm.Controls.Add(lblMsg);
+                inputForm.Controls.Add(txtEmail);
+                inputForm.Controls.Add(btnGo);
+                inputForm.Controls.Add(btnSkip);
+                inputForm.AcceptButton = btnGo;
+
+                if (inputForm.ShowDialog(this) == DialogResult.OK)
+                {
+                    string entered = txtEmail.Text.Trim();
+                    if (!string.IsNullOrWhiteSpace(entered))
+                    {
+                        _settings.CanvaAccountEmail = entered;
+                        _settings.Save();
+                        if (txtCanvaEmail != null) txtCanvaEmail.Text = entered;
+                    }
+                }
             }
 
-            lblDesignerStatus.Text = "Generating HD 1080x1920 Wallpaper with AI... Please wait...";
-            btnGenerateAi.Enabled = false;
-
-            ReleaseThumbnailPreviews();
-
-            string outDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "temp_bg");
-            Directory.CreateDirectory(outDir);
-            string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmssfff");
-            _tempChatBgPath = Path.Combine(outDir, $"Background_{stamp}.png");
-            _tempCallBgPath = Path.Combine(outDir, $"CallBackground_{stamp}.png");
-
-            var result = await ImageGenerator.GenerateWithAiAsync(prompt, _tempChatBgPath);
-            btnGenerateAi.Enabled = true;
-
-            if (result.Success && File.Exists(_tempChatBgPath))
+            string prompt = txtAiPrompt.Text.Trim();
+            string targetUrl;
+            if (!string.IsNullOrWhiteSpace(prompt))
             {
-                ImageGenerator.GenerateCallBackground(_tempChatBgPath, _tempCallBgPath);
-                LoadThumbnailPreviews();
-                SyncSimulatorFromDesigner();
-                lblDesignerStatus.Text = "AI Wallpaper generated successfully!";
+                targetUrl = "https://www.canva.com/search/templates?q=phone+wallpaper+" + Uri.EscapeDataString(prompt);
             }
             else
             {
-                lblDesignerStatus.Text = "AI Generation: " + result.Message;
-                MessageBox.Show(result.Message + "\nFalling back to procedural atmospheric generation.", "AI Generator Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                GenerateProceduralWallpaper();
+                targetUrl = "https://www.canva.com/create/phone-wallpapers/";
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = targetUrl,
+                    UseShellExecute = true
+                });
+
+                lblDesignerStatus.Text = string.IsNullOrEmpty(_settings.CanvaAccountEmail)
+                    ? "Opened Canva in browser! Sign in with Google, design 9:16 (1080x1920) wallpaper, download, then click 'Auto-Import'."
+                    : $"Opened Canva for {_settings.CanvaAccountEmail}! Design, download, and click 'Auto-Import from Canva Downloads'.";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Could not open browser: " + ex.Message, "Browser Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        private void AutoImportFromCanvaDownloads()
+        {
+            try
+            {
+                string downloadsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+                if (!Directory.Exists(downloadsPath))
+                {
+                    BrowseBgFile();
+                    return;
+                }
+
+                var dir = new DirectoryInfo(downloadsPath);
+                var cutoff = DateTime.Now.AddHours(-4);
+                var candidates = new System.Collections.Generic.List<FileInfo>();
+                foreach (var f in dir.GetFiles("*.*"))
+                {
+                    string ext = f.Extension.ToLowerInvariant();
+                    if ((ext == ".png" || ext == ".jpg" || ext == ".jpeg") && f.LastWriteTime >= cutoff)
+                    {
+                        candidates.Add(f);
+                    }
+                }
+                candidates.Sort((a, b) => b.LastWriteTime.CompareTo(a.LastWriteTime));
+
+                if (candidates.Count > 0)
+                {
+                    var newest = candidates[0];
+                    ReleaseThumbnailPreviews();
+
+                    string outDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "temp_bg");
+                    Directory.CreateDirectory(outDir);
+                    string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmssfff");
+                    _tempChatBgPath = Path.Combine(outDir, $"Background_{stamp}.png");
+                    _tempCallBgPath = Path.Combine(outDir, $"CallBackground_{stamp}.png");
+
+                    File.Copy(newest.FullName, _tempChatBgPath, true);
+                    ImageGenerator.GenerateCallBackground(_tempChatBgPath, _tempCallBgPath);
+
+                    LoadThumbnailPreviews();
+                    SyncSimulatorFromDesigner();
+
+                    lblDesignerStatus.Text = $"✓ Auto-imported latest Canva design: '{newest.Name}'";
+                    MessageBox.Show($"Successfully auto-imported your Canva design:\n{newest.FullName}\n\nChat Wallpaper & Ambient Call Screen generated!", "Canva Wallpaper Imported", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    using var ofd = new OpenFileDialog
+                    {
+                        InitialDirectory = downloadsPath,
+                        Filter = "Image Files (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg",
+                        Title = "Select your downloaded Canva Wallpaper"
+                    };
+                    if (ofd.ShowDialog() == DialogResult.OK)
+                    {
+                        ReleaseThumbnailPreviews();
+
+                        string outDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "temp_bg");
+                        Directory.CreateDirectory(outDir);
+                        string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmssfff");
+                        _tempChatBgPath = Path.Combine(outDir, $"Background_{stamp}.png");
+                        _tempCallBgPath = Path.Combine(outDir, $"CallBackground_{stamp}.png");
+
+                        File.Copy(ofd.FileName, _tempChatBgPath, true);
+                        ImageGenerator.GenerateCallBackground(_tempChatBgPath, _tempCallBgPath);
+
+                        LoadThumbnailPreviews();
+                        SyncSimulatorFromDesigner();
+
+                        lblDesignerStatus.Text = $"Loaded Canva wallpaper from: {Path.GetFileName(ofd.FileName)}";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error importing Canva wallpaper: " + ex.Message, "Import Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+
 
         private void GenerateProceduralWallpaper()
         {
@@ -898,6 +1075,7 @@ namespace RMSThemeStudio
             _settings.ThemeBaseDirectory = txtThemeBasePath.Text.Trim();
             _settings.NotificationBaseDirectory = txtNotifBasePath.Text.Trim();
             _settings.BaseWebUrl = txtBaseWebUrl.Text.Trim();
+            if (txtCanvaEmail != null) _settings.CanvaAccountEmail = txtCanvaEmail.Text.Trim();
 
             _settings.Save();
             _dbManager = new DbManager(_settings);
