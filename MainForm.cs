@@ -629,89 +629,116 @@ namespace RMSThemeStudio
 
         private void OpenCanvaWithGoogleLogin()
         {
-            if (string.IsNullOrWhiteSpace(_settings.CanvaAccountEmail))
+            using var inputForm = new Form
             {
-                using var inputForm = new Form
-                {
-                    Text = "Canva Account Login (Google)",
-                    Size = new Size(480, 240),
-                    StartPosition = FormStartPosition.CenterParent,
-                    FormBorderStyle = FormBorderStyle.FixedDialog,
-                    MaximizeBox = false,
-                    MinimizeBox = false,
-                    BackColor = Color.FromArgb(15, 23, 42),
-                    ForeColor = Color.White
-                };
-                var lblMsg = new Label
-                {
-                    Text = "Link your Canva / Google Account to RMS Theme Studio:\n(A browser tab will open for you to sign in with Google)",
-                    Location = new Point(20, 20),
-                    Size = new Size(420, 45),
-                    ForeColor = Color.FromArgb(226, 232, 240)
-                };
-                var txtEmail = new TextBox
-                {
-                    Location = new Point(20, 75),
-                    Width = 420,
-                    Font = new Font("Segoe UI", 10.5f),
-                    BackColor = Color.FromArgb(30, 41, 59),
-                    ForeColor = Color.White,
-                    BorderStyle = BorderStyle.FixedSingle,
-                    PlaceholderText = "e.g. your.email@gmail.com"
-                };
-                var btnGo = new Button
-                {
-                    Text = "🚀 Open Canva & Sign in with Google",
-                    Location = new Point(20, 130),
-                    Width = 270,
-                    Height = 38,
-                    BackColor = Color.FromArgb(124, 58, 237),
-                    ForeColor = Color.White,
-                    Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                    FlatStyle = FlatStyle.Flat,
-                    DialogResult = DialogResult.OK
-                };
-                btnGo.FlatAppearance.BorderSize = 0;
-                var btnSkip = new Button
-                {
-                    Text = "Open Directly",
-                    Location = new Point(300, 130),
-                    Width = 140,
-                    Height = 38,
-                    BackColor = Color.FromArgb(51, 65, 85),
-                    ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat,
-                    DialogResult = DialogResult.OK
-                };
-                btnSkip.FlatAppearance.BorderSize = 0;
+                Text = "Canva Account Login via Google",
+                Size = new Size(520, 280),
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = Color.FromArgb(15, 23, 42),
+                ForeColor = Color.White
+            };
 
-                inputForm.Controls.Add(lblMsg);
-                inputForm.Controls.Add(txtEmail);
-                inputForm.Controls.Add(btnGo);
-                inputForm.Controls.Add(btnSkip);
-                inputForm.AcceptButton = btnGo;
+            var lblHeader = new Label
+            {
+                Text = "🎨 Canva Design Studio (Google Authentication)",
+                Location = new Point(20, 16),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 11.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(56, 189, 248)
+            };
 
-                if (inputForm.ShowDialog(this) == DialogResult.OK)
-                {
-                    string entered = txtEmail.Text.Trim();
-                    if (!string.IsNullOrWhiteSpace(entered))
-                    {
-                        _settings.CanvaAccountEmail = entered;
-                        _settings.Save();
-                        if (txtCanvaEmail != null) txtCanvaEmail.Text = entered;
-                    }
-                }
+            var lblMsg = new Label
+            {
+                Text = "Enter your Google / Canva account email to continue.\nA tab will open in your default browser for you to sign in via Google and access Canva directly.",
+                Location = new Point(20, 48),
+                Size = new Size(460, 42),
+                Font = new Font("Segoe UI", 9.5f),
+                ForeColor = Color.FromArgb(203, 213, 225)
+            };
+
+            var lblEmail = new Label
+            {
+                Text = "Canva / Google Account Email:",
+                Location = new Point(20, 100),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                ForeColor = Color.White
+            };
+
+            var txtEmail = new TextBox
+            {
+                Location = new Point(20, 124),
+                Width = 460,
+                Font = new Font("Segoe UI", 11f),
+                BackColor = Color.FromArgb(30, 41, 59),
+                ForeColor = Color.White,
+                BorderStyle = BorderStyle.FixedSingle,
+                Text = !string.IsNullOrWhiteSpace(_settings.CanvaAccountEmail) ? _settings.CanvaAccountEmail : Environment.UserName + "@gmail.com"
+            };
+
+            var btnGo = new Button
+            {
+                Text = "🌐 Open Browser & Sign in via Google",
+                Location = new Point(20, 175),
+                Width = 300,
+                Height = 40,
+                BackColor = Color.FromArgb(124, 58, 237),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 10f, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat,
+                DialogResult = DialogResult.OK
+            };
+            btnGo.FlatAppearance.BorderSize = 0;
+
+            var btnCancel = new Button
+            {
+                Text = "Cancel",
+                Location = new Point(335, 175),
+                Width = 145,
+                Height = 40,
+                BackColor = Color.FromArgb(51, 65, 85),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9.5f),
+                FlatStyle = FlatStyle.Flat,
+                DialogResult = DialogResult.Cancel
+            };
+            btnCancel.FlatAppearance.BorderSize = 0;
+
+            inputForm.Controls.Add(lblHeader);
+            inputForm.Controls.Add(lblMsg);
+            inputForm.Controls.Add(lblEmail);
+            inputForm.Controls.Add(txtEmail);
+            inputForm.Controls.Add(btnGo);
+            inputForm.Controls.Add(btnCancel);
+            inputForm.AcceptButton = btnGo;
+            inputForm.CancelButton = btnCancel;
+
+            if (inputForm.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            string enteredEmail = txtEmail.Text.Trim();
+            if (!string.IsNullOrWhiteSpace(enteredEmail))
+            {
+                _settings.CanvaAccountEmail = enteredEmail;
+                _settings.Save();
+                if (txtCanvaEmail != null) txtCanvaEmail.Text = enteredEmail;
             }
 
             string prompt = txtAiPrompt.Text.Trim();
             string targetUrl;
             if (!string.IsNullOrWhiteSpace(prompt))
             {
-                targetUrl = "https://www.canva.com/search/templates?q=phone+wallpaper+" + Uri.EscapeDataString(prompt);
+                string encodedSearch = Uri.EscapeDataString("phone wallpaper " + prompt);
+                targetUrl = $"https://www.canva.com/login?redirect_to=%2Fsearch%2Ftemplates%3Fq%3D{encodedSearch}";
             }
             else
             {
-                targetUrl = "https://www.canva.com/create/phone-wallpapers/";
+                targetUrl = "https://www.canva.com/login?redirect_to=%2Fcreate%2Fphone-wallpapers%2F";
             }
 
             try
@@ -722,9 +749,7 @@ namespace RMSThemeStudio
                     UseShellExecute = true
                 });
 
-                lblDesignerStatus.Text = string.IsNullOrEmpty(_settings.CanvaAccountEmail)
-                    ? "Opened Canva in browser! Sign in with Google, design 9:16 (1080x1920) wallpaper, download, then click 'Auto-Import'."
-                    : $"Opened Canva for {_settings.CanvaAccountEmail}! Design, download, and click 'Auto-Import from Canva Downloads'.";
+                lblDesignerStatus.Text = $"✓ Opened Canva in browser for {enteredEmail}! Sign in with Google, design 9:16 (1080x1920) wallpaper, download, then click 'Auto-Import from Canva Downloads'.";
             }
             catch (Exception ex)
             {
