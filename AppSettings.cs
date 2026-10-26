@@ -19,6 +19,13 @@ namespace RMSThemeStudio
         public string AiImageEndpoint { get; set; } = "https://image.pollinations.ai/prompt/{prompt}?width=1080&height=1920&model=flux&nologo=true";
         public string CanvaAccountEmail { get; set; } = "";
 
+        public string CanvaClientId { get; set; } = "";
+        public string CanvaClientSecret { get; set; } = "";
+        public string CanvaAccessToken { get; set; } = "";
+        public string CanvaRefreshToken { get; set; } = "";
+        public string CanvaUserName { get; set; } = "";
+        public DateTime CanvaTokenExpiry { get; set; } = DateTime.MinValue;
+
         private static readonly string SettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "theme_studio_settings.json");
 
         public string GetConnectionString()

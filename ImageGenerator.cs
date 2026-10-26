@@ -160,5 +160,49 @@ namespace RMSThemeStudio
                 File.WriteAllBytes(outputCallBgPath, ms.ToArray());
             }
         }
+
+        /// <summary>
+        /// Fully stretches and resamples an image to exact 1080x1920 mobile screen dimensions with zero letterboxing.
+        /// </summary>
+        public static void SaveImageStretchedToMobile(byte[] rawBytes, string outputPath, int targetWidth = 1080, int targetHeight = 1920)
+        {
+            if (rawBytes == null || rawBytes.Length == 0) return;
+            using var ms = new MemoryStream(rawBytes);
+            using var src = Image.FromStream(ms);
+            SaveImageStretchedToMobile(src, outputPath, targetWidth, targetHeight);
+        }
+
+        /// <summary>
+        /// Fully stretches and resamples an image file to exact 1080x1920 mobile screen dimensions with zero letterboxing.
+        /// </summary>
+        public static void SaveImageStretchedToMobile(string inputPath, string outputPath, int targetWidth = 1080, int targetHeight = 1920)
+        {
+            if (!File.Exists(inputPath)) return;
+            using var src = LoadImageNoLock(inputPath);
+            if (src == null) return;
+            SaveImageStretchedToMobile(src, outputPath, targetWidth, targetHeight);
+        }
+
+        /// <summary>
+        /// Fully stretches and resamples an Image object to exact target mobile dimensions with high-quality bicubic interpolation.
+        /// </summary>
+        public static void SaveImageStretchedToMobile(Image src, string outputPath, int targetWidth = 1080, int targetHeight = 1920)
+        {
+            if (src == null) return;
+            using var bmp = new Bitmap(targetWidth, targetHeight, PixelFormat.Format32bppArgb);
+            using var g = Graphics.FromImage(bmp);
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.SmoothingMode = SmoothingMode.HighQuality;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            g.CompositingQuality = CompositingQuality.HighQuality;
+
+            // Fully stretch the image edge-to-edge across the entire screen area
+            g.DrawImage(src, new Rectangle(0, 0, targetWidth, targetHeight));
+
+            Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+            using var outMs = new MemoryStream();
+            bmp.Save(outMs, ImageFormat.Png);
+            File.WriteAllBytes(outputPath, outMs.ToArray());
+        }
     }
 }
